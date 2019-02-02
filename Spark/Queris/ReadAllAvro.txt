@@ -1,0 +1,16 @@
+from pyspark.sql.types import *
+from decimal import *
+from pyspark.sql import *
+from pyspark.sql import functions as F
+
+
+lineitem = spark.read.format("com.databricks.spark.avro").load("hdfs://namenode:8020/arezoo-data/lineitem.avro")
+region = spark.read.format("com.databricks.spark.avro").load("hdfs://namenode:8020/arezoo-data/region.avro")
+nation = spark.read.format("com.databricks.spark.avro").load("hdfs://namenode:8020/arezoo-data/nation.avro")
+part = spark.read.format("com.databricks.spark.avro").load("hdfs://namenode:8020/arezoo-data/part.avro")
+supplier = spark.read.format("com.databricks.spark.avro").load("hdfs://namenode:8020/arezoo-data/supplier.avro")
+partsupp = spark.read.format("com.databricks.spark.avro").load("hdfs://namenode:8020/arezoo-data/partsupp.avro")
+customer = spark.read.format("com.databricks.spark.avro").load("hdfs://namenode:8020/arezoo-data/customer.avro")
+orders = spark.read.format("com.databricks.spark.avro").load("hdfs://namenode:8020/arezoo-data/orders.avro")
+
+
