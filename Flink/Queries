@@ -1,0 +1,1094 @@
+import org.apache.avro.generic.GenericRecord;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.tuple.*;
+import org.apache.flink.core.fs.Path;
+import org.apache.flink.formats.avro.AvroInputFormat;
+import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.api.java.BatchTableEnvironment;
+import org.apache.flink.table.sinks.CsvTableSink;
+import org.apache.flink.table.sinks.TableSink;
+import org.apache.flink.types.Row;
+
+import java.sql.Date;
+
+public class Flink_Test {
+    public static void main(String[] args) throws Exception {
+
+        // Creating Flink environment variables
+        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        final BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env);
+
+
+        // Setting the Source Path Variables
+
+        long start = System.currentTimeMillis();
+        String nation_path = "hdfs://namenode:8020/arezoo-data/nation.avro";
+        String region_path = "hdfs://namenode:8020/arezoo-data/region.avro";
+        String part_path = "hdfs://namenode:8020/arezoo-data/part.avro";
+        String supplier_path = "hdfs://namenode:8020/arezoo-data/supplier.avro";
+        String customer_path = "hdfs://namenode:8020/arezoo-data/customer.avro";
+        String partsupp_path = "hdfs://namenode:8020/arezoo-data/partsupp.avro";
+        String order_path = "hdfs://namenode:8020/arezoo-data/orders.avro";
+        String lineitem_path = "hdfs://namenode:8020/arezoo-data/lineitem.avro";
+
+
+
+
+
+        // Getting Running Variables
+
+        int q_num = Integer.parseInt(args[0]);
+        String SinkPath = args[1] ;
+
+        //******************************* Nation **************************************
+
+        AvroInputFormat<GenericRecord> nations = new AvroInputFormat<GenericRecord>(
+                new Path(nation_path)
+                , GenericRecord.class);
+        DataSet<Tuple4<Long, String, Long, String>> NationDS = env.createInput(nations)
+                .map(new MapFunction<GenericRecord, Tuple4<Long, String, Long, String>>() {
+                    @Override
+                    public Tuple4<Long, String, Long, String> map(GenericRecord genericRecord) throws Exception {
+                        String[] temp = genericRecord.toString().split(",");
+                        Long l1, l2 ;
+                        String s1, s2 ;
+                        try { l1 = Long.parseLong(temp[0].split(":")[1].trim());}
+                        catch (Exception e) { l1 = -1L ;}
+                        try { l2 = Long.parseLong(temp[2].split(":")[1].trim());}
+                        catch (Exception e) { l2 = -1L ;}
+                        try { s1 = temp[1].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e) { s1 = "" ;}
+                        try { s2 = temp[3].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e) { s2 = "" ;}
+                        return new Tuple4<>(
+                                l1,
+                                s1,
+                                l2,
+                                s2
+                        );
+                    }
+                });
+
+        tableEnv.registerDataSet("nation", NationDS, "n_nationkey, n_name, n_regionkey, n_comment");
+        Table nation = tableEnv.scan("nation");
+
+        //******************************* Region **************************************
+
+        AvroInputFormat<GenericRecord> regions = new AvroInputFormat<GenericRecord>(
+                new Path(region_path)
+                , GenericRecord.class);
+        DataSet<Tuple3<Long, String, String>> RegionDS = env.createInput(regions)
+                .map(new MapFunction<GenericRecord, Tuple3<Long, String, String>>() {
+                    @Override
+                    public Tuple3<Long, String, String> map(GenericRecord genericRecord) throws Exception {
+                        String[] temp = genericRecord.toString().split(",");
+                        Long l1;
+                        String s1, s2 ;
+                        try { l1 = Long.parseLong(temp[0].split(":")[1].trim());}
+                        catch (Exception e) { l1 = -1L; }
+                        try { s1 = temp[1].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e) { s1 = ""; }
+                        try { s2 = temp[2].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e) { s2 = ""; }
+                        return new Tuple3<>(
+                                Long.parseLong(temp[0].split(":")[1].trim()),
+                                temp[1].split(":")[1].trim().replaceAll("[\"}]", ""),
+                                temp[2].split(":")[1].trim().replaceAll("[\"}]", "")
+                        );
+                    }
+                });
+
+        tableEnv.registerDataSet("region", RegionDS, "r_regionkey, r_name, r_comment");
+        Table region = tableEnv.scan("region");
+
+        //******************************* part **************************************
+
+        AvroInputFormat<GenericRecord> parts = new AvroInputFormat<GenericRecord>(
+                new Path(part_path)
+                , GenericRecord.class);
+        DataSet<Tuple9<Long, String, String, String, String, Integer, String, Float, String>> PartDS = env.createInput(parts)
+                .map(new MapFunction<GenericRecord, Tuple9<Long, String, String, String, String, Integer, String, Float, String>>() {
+                    @Override
+                    public Tuple9<Long, String, String, String, String, Integer, String, Float, String> map(GenericRecord genericRecord) throws Exception {
+                        String[] temp = genericRecord.toString().split(",");
+                        Long l1 ;
+                        String s1, s2, s3, s4, s5, s6 ;
+                        Integer t1 ;
+                        Float f1 ;
+                        try {l1 = Long.parseLong(temp[0].split(":")[1].trim());}
+                        catch (Exception e) {l1 = -1L;}
+                        try {s1 = temp[1].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e) {s1 = "";}
+                        try {s2 = temp[2].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e) {s2 = "";}
+                        try {s3 = temp[3].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e) {s3 = "";}
+                        try {s4 = temp[4].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e) {s4 = "";}
+                        try {t1 = Integer.parseInt(temp[5].split(":")[1].trim());}
+                        catch (Exception e) {t1 = -1;}
+                        try {f1 = Float.parseFloat(temp[7].split(":")[1].trim());}
+                        catch (Exception e) {f1 = -1F;}
+                        try {s5 = temp[6].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e) {s5 = "";}
+                        try {s6 = temp[8].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e) {s6 = "";}
+                        return new Tuple9<>(
+                                l1,
+                                s1,
+                                s2,
+                                s3,
+                                s4,
+                                t1,
+                                s5,
+                                f1,
+                                s6
+                        );
+                    }
+                });
+
+        tableEnv.registerDataSet("part", PartDS,
+                "p_partkey" +
+                        ",p_name" +
+                        ",p_mfgr" +
+                        ",p_brand" +
+                        ",p_type" +
+                        ",p_size" +
+                        ",p_container" +
+                        ",p_retailprice" +
+                        ",p_comment"
+        );
+        Table part = tableEnv.scan("part");
+
+        //******************************* supplier **************************************
+
+        AvroInputFormat<GenericRecord> suppliers = new AvroInputFormat<GenericRecord>(
+                new Path(supplier_path)
+                , GenericRecord.class);
+        DataSet<Tuple7<Long, String, String, Long, String, Float, String>> SupplierDS = env.createInput(suppliers)
+                .map(new MapFunction<GenericRecord, Tuple7<Long, String, String, Long, String, Float, String>>() {
+                    @Override
+                    public Tuple7<Long, String, String, Long, String, Float, String> map(GenericRecord genericRecord) throws Exception {
+                        String[] temp = genericRecord.toString().split(",");
+                        Long key = -1L;
+                        Float acc = -1F;
+                        String temp_s = "" ;
+                        String temp_s1 = "" ;
+//                        for (int i = 0 ; i < temp.length ; i ++)
+//                            System.out.println("******** temp[" + i + "] : " + temp[i] + " ***********");
+                        if(temp[3].split(":").length == 2)
+                            key = Long.parseLong(temp[3].split(":")[1].trim());
+                        try {
+                            acc = Float.parseFloat(temp[5].split(":")[1].trim());
+                        } catch (Exception e) {
+                            acc = -1F ;
+                        }
+                        try {
+                            temp_s =  temp[4].split(":")[1].trim().replaceAll("[\"}]", "");
+                        } catch (Exception e){
+                            temp_s = "";
+                        }
+                        try {
+                            temp_s1 =  temp[6].split(":")[1].trim().replaceAll("[\"}]", "");
+                        } catch (Exception e){
+                            temp_s1 = "";
+                        }
+                        return new Tuple7<>(
+                                Long.parseLong(temp[0].split(":")[1].trim()),
+                                temp[1].split(":")[1].trim().replaceAll("[\"}]", ""),
+                                temp[2].split(":")[1].trim().replaceAll("[\"}]", ""),
+                                key,
+                                temp_s,
+                                acc,
+                                temp_s1
+                        );
+                    }
+                });
+
+        tableEnv.registerDataSet("supplier", SupplierDS,
+                "s_suppkey" +
+                        ",s_name" +
+                        ",s_address" +
+                        ",s_nationkey" +
+                        ",s_phone" +
+                        ",s_acctbal" +
+                        ",s_comment"
+        );
+        Table supplier = tableEnv.scan("supplier");
+
+        //******************************* partsupp **************************************
+
+        AvroInputFormat<GenericRecord> partsupps = new AvroInputFormat<GenericRecord>(
+                new Path(partsupp_path)
+                , GenericRecord.class);
+        DataSet<Tuple5<Long, Long, Integer, Float, String>> PartsuppDS = env.createInput(partsupps)
+                .map(new MapFunction<GenericRecord, Tuple5<Long, Long, Integer, Float, String>>() {
+                    @Override
+                    public Tuple5<Long, Long, Integer, Float, String> map(GenericRecord genericRecord) throws Exception {
+                        String[] temp = genericRecord.toString().split(",");
+                        Long l1, l2 ;
+                        Integer t1 ;
+                        Float f1 ;
+                        String s1 ;
+                        try {l1 = Long.parseLong(temp[0].split(":")[1].trim());}
+                        catch (Exception e) {l1 = -1L ;}
+                        try {l2 = Long.parseLong(temp[1].split(":")[1].trim());}
+                        catch (Exception e) {l2 = -1L ;}
+                        try {f1 = Float.parseFloat(temp[3].split(":")[1].trim());}
+                        catch (Exception e) {f1 = -1F ;}
+                        try {t1 = Integer.parseInt(temp[2].split(":")[1].trim());}
+                        catch (Exception e) {t1 = -1 ;}
+                        try {s1 = temp[4].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e) {s1 = "" ;}
+                        return new Tuple5<>(
+                                l1,
+                                l2,
+                                t1,
+                                f1,
+                                s1
+                        );
+                    }
+                });
+
+        tableEnv.registerDataSet("partsupp", PartsuppDS,
+                "ps_partkey" +
+                        ",ps_suppkey" +
+                        ",ps_availqty" +
+                        ",ps_supplycost" +
+                        ",ps_comment"
+        );
+        Table partsupp = tableEnv.scan("partsupp");
+
+        //******************************* customer **************************************
+
+        AvroInputFormat<GenericRecord> customers = new AvroInputFormat<GenericRecord>(
+                new Path(customer_path)
+                , GenericRecord.class);
+        DataSet<Tuple8<Long, String, String, Long, String, Float, String, String>> CustomerDS = env.createInput(customers)
+                .map(new MapFunction<GenericRecord, Tuple8<Long, String, String, Long, String, Float, String, String>>() {
+                    @Override
+                    public Tuple8<Long, String, String, Long, String, Float, String, String> map(GenericRecord genericRecord) throws Exception {
+                        String[] temp = genericRecord.toString().split(",");
+                        Float acc = -1F ;
+                        Long l1 = -1L ;
+                        Long l2 = -1L ;
+                        String s1 = "" ;
+                        String s2 = "" ;
+                        String s6 = "" ;
+                        String s4 = "" ;
+                        String s7 = "" ;
+
+                        try {
+                            s4 = temp[4].split(":")[1].trim().replaceAll("[\"}]", "");
+                        } catch (Exception e){
+                            s4 = "";
+                        }
+                        try {
+                            s1 = temp[1].split(":")[1].trim().replaceAll("[\"}]", "");
+                        } catch (Exception e){
+                            s1 = "";
+                        }
+                        try {
+                            s2 = temp[2].split(":")[1].trim().replaceAll("[\"}]", "");
+                        } catch (Exception e){
+                            s2 = "";
+                        }
+                        try {
+                            s6 = temp[6].split(":")[1].trim().replaceAll("[\"}]", "");
+                        } catch (Exception e){
+                            s6 = "";
+                        }
+                        try {
+                            s7 = temp[7].split(":")[1].trim().replaceAll("[\"}]", "");
+                        } catch (Exception e){
+                            s7 = "";
+                        }
+                        try {
+                            l1 = Long.parseLong(temp[0].split(":")[1].trim());
+                        } catch (Exception e) {
+                            l1 = -1L ;
+                        }
+                        try {
+                            l2 = Long.parseLong(temp[3].split(":")[1].trim());
+                        }catch (Exception e) {
+                            l2 = -1L ;
+                        }
+                        try {
+                            acc = Float.parseFloat(temp[5].split(":")[1].trim());
+                        } catch (Exception e) {
+                            acc = -1F ;
+                        }
+                        return new Tuple8<>(
+                                l1,
+                                s1,
+                                s2,
+                                l2,
+                                s1,
+                                acc,
+                                s6,
+                                s7
+                        );
+                    }
+                });
+
+        tableEnv.registerDataSet("customer", CustomerDS,
+                "c_custkey" +
+                        ",c_name" +
+                        ",c_address" +
+                        ",c_nationkey" +
+                        ",c_phone" +
+                        ",c_acctbal" +
+                        ",c_mktsegment" +
+                        ",c_comment"
+        );
+        Table customer = tableEnv.scan("customer");
+
+        //******************************* orders **************************************
+
+        AvroInputFormat<GenericRecord> orders = new AvroInputFormat<GenericRecord>(
+                new Path(order_path)
+                , GenericRecord.class);
+        DataSet<Tuple9<Long, Long, String, Float, Date, String, String, Integer, String>> OrderDS = env.createInput(orders)
+                .map(new MapFunction<GenericRecord, Tuple9<Long, Long, String, Float, Date, String, String, Integer, String>>() {
+                    @Override
+                    public Tuple9<Long, Long, String, Float, Date, String, String, Integer, String> map(GenericRecord genericRecord) throws Exception {
+                        String[] temp = genericRecord.toString().split(",");
+                        Integer t1 ;
+                        Long l1, l2;
+                        String s1, s2, s3, s4 ;
+                        Float f1;
+                        Date d1 ;
+                        try {l1 = Long.parseLong(temp[0].split(":")[1].trim());}
+                        catch (Exception e){ l1 = -1L;}
+                        try {l2 = Long.parseLong(temp[1].split(":")[1].trim());}
+                        catch (Exception e){ l2 = -1L;}
+                        try {t1 = Integer.parseInt(temp[7].split(":")[1].trim());}
+                        catch (Exception e){ t1 = -1;}
+                        try {f1 = Float.parseFloat(temp[3].split(":")[1].trim());}
+                        catch (Exception e){ f1 = -1F;}
+                        try {d1 = Date.valueOf(temp[4].split(":")[1].trim().replaceAll("[\"}]", ""));}
+                        catch (Exception e){ d1 = Date.valueOf("2020-01-01");}
+                        try {s1 = temp[2].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e){ s1 = "";}
+                        try {s2 = temp[5].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e){ s2 = "";}
+                        try {s3 = temp[6].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e){ s3 = "";}
+                        try {s4 = temp[8].split(":")[1].trim().replaceAll("[\"}]", "");}
+                        catch (Exception e){ s4 = "";}
+                        return new Tuple9<>(
+                                l1,
+                                l2,
+                                s1,
+                                f1,
+                                d1,
+                                s2,
+                                s3,
+                                t1,
+                                s4
+                        );
+                    }
+                });
+
+        tableEnv.registerDataSet("orders", OrderDS,
+                "o_orderkey" +
+                        ",o_custkey" +
+                        ",o_orderstatus" +
+                        ",o_totalprice" +
+                        ",o_orderdate" +
+                        ",o_orderpriority" +
+                        ",o_clerk" +
+                        ",o_shippriority" +
+                        ",o_comment"
+        );
+        Table order = tableEnv.scan("orders");
+
+        //******************************* lineitem **************************************
+
+        AvroInputFormat<GenericRecord> lineitems = new AvroInputFormat<GenericRecord>(
+                new Path(lineitem_path)
+                , GenericRecord.class);
+        DataSet<Tuple16<Long, Long, Long, Integer, Float, Float, Float, Float, String, String, Date, Date, Date, String, String, String>> LineitemDS = env.createInput(lineitems)
+                .map(new MapFunction<GenericRecord, Tuple16<Long, Long, Long, Integer, Float, Float, Float, Float, String, String, Date, Date, Date, String, String, String>>() {
+                    @Override
+                    public Tuple16<Long, Long, Long, Integer, Float, Float, Float, Float, String, String, Date, Date, Date, String, String, String> map(GenericRecord genericRecord) throws Exception {
+                        String[] temp = genericRecord.toString().split(",");
+
+                        return new Tuple16<>(
+                                Long.parseLong(temp[0].split(":")[1].trim()),
+                                Long.parseLong(temp[1].split(":")[1].trim()),
+                                Long.parseLong(temp[2].split(":")[1].trim()),
+                                Integer.parseInt(temp[3].split(":")[1].trim()),
+                                Float.parseFloat(temp[4].split(":")[1].trim()),
+                                Float.parseFloat(temp[5].split(":")[1].trim()),
+                                Float.parseFloat(temp[6].split(":")[1].trim()),
+                                Float.parseFloat(temp[7].split(":")[1].trim()),
+                                temp[8].split(":")[1].trim().replaceAll("[\"}]", ""),
+                                temp[9].split(":")[1].trim().replaceAll("[\"}]", ""),
+                                Date.valueOf(temp[10].split(":")[1].trim().replaceAll("[\"}]", "")),
+                                Date.valueOf(temp[11].split(":")[1].trim().replaceAll("[\"}]", "")),
+                                Date.valueOf(temp[12].split(":")[1].trim().replaceAll("[\"}]", "")),
+                                temp[13].split(":")[1].trim().replaceAll("[\"}]", ""),
+                                temp[14].split(":")[1].trim().replaceAll("[\"}]", ""),
+                                temp[15].split(":")[1].trim().replaceAll("[\"}]", "")
+                        );
+                    }
+                });
+
+        tableEnv.registerDataSet("lineitem", LineitemDS,
+                "l_orderkey" +
+                        ",l_partkey" +
+                        ",l_suppkey" +
+                        ",l_linenumber" +
+                        ",l_quantity" +
+                        ",l_extendedprice" +
+                        ",l_discount" +
+                        ",l_tax" +
+                        ",l_returnflag" +
+                        ",l_linestatus" +
+                        ",l_shipdate" +
+                        ",l_commitdate" +
+                        ",l_receiptdate" +
+                        ",l_shipinstruct" +
+                        ",l_shipmode" +
+                        ",l_comment"
+
+        );
+        Table lineitem = tableEnv.scan("lineitem");
+
+        long START = System.currentTimeMillis();
+
+
+        //******************************* Query 1 **************************************
+
+        if (q_num == 1) {
+            Table q1 = tableEnv.sqlQuery("select * from lineitem where l_shipdate <= '1998-10-02'")
+//                .filter("l_shipdate <= " + Date.valueOf("1998-10-02"))
+                    .groupBy("l_returnflag,l_linestatus")
+                    .select(
+                            "l_returnflag," +
+                                    "l_linestatus," +
+                                    "l_quantity.sum as sum_qty," +
+                                    "(l_extendedprice * (1 - l_discount)).sum as sum_disc_price," +
+                                    "l_extendedprice.sum as sum_base_price," +
+                                    "(l_extendedprice * (1 - l_discount) * (l_tax + 1)).sum as sum_charge," +
+                                    "l_quantity.avg as avg_qty," +
+                                    "l_extendedprice.avg as avg_price," +
+                                    "l_discount.avg as avg_disc, " +
+                                    "count(1) as count_order"
+                    )
+                    .orderBy("l_returnflag,l_linestatus");
+
+            TableSink<Row> q1Sink = new CsvTableSink(SinkPath, ",");
+            q1.writeToSink(q1Sink);
+        }
+
+        //******************************* Query 2 **************************************
+
+        if (q_num == 2) {
+            Table q2_1 = region
+                    .filter("r_name == 'europe' ")
+                    .join(nation, "r_regionkey == n_regionkey")
+                    .join(supplier, "n_nationkey == s_nationkey")
+                    .join(partsupp, "s_suppkey == ps_suppkey");
+            Table q2_2 = part
+                    .filter("p_size == 50")
+                    .filter("p_type.like('%NICKEL%')")
+                    .join(q2_1, "ps_partkey == p_partkey");
+            Table minCost = q2_2
+                    .groupBy("ps_partkey")
+                    .select(" ps_partkey as min_ps_partkey,ps_supplycost.min as min");
+            Table q2_res = q2_2
+                    .join(minCost, "ps_partkey == min_ps_partkey")
+                    .filter("ps_supplycost == min")
+                    .select("s_acctbal, s_name, n_name, p_partkey, p_mfgr, s_address, s_phone, s_comment")
+                    .orderBy("s_acctbal.desc, n_name, s_name, p_partkey")
+                    .fetch(100);
+
+
+            TableSink<Row> q2Sink = new CsvTableSink(SinkPath, ",");
+            q2_res.writeToSink(q2Sink);
+        }
+
+        //******************************* Query 3 **************************************
+
+        if (q_num == 3) {
+            Table temp_customer = customer
+                    .filter("c_mktsegment = 'HOUSEHOLD'");
+            Table temp_order = tableEnv
+                    .sqlQuery("select * from orders where o_orderdate < '1995-03-10'");
+//                    .filter("o_orderdate < '1995-03-10'");
+            Table temp_lineitem = tableEnv.sqlQuery("Select * from lineitem where l_shipdate > '1995-03-10'");
+//                    .filter("l_shipdate > '1995-03-10'");
+            Table join1 = temp_customer
+                    .join(temp_order,"c_custkey == o_custkey");
+            Table q3 = join1
+                    .join(temp_lineitem, "o_orderkey == l_orderkey")
+                    .groupBy("l_orderkey, o_orderdate, o_shippriority")
+                    .select("(l_extendedprice * (1 - l_discount)).sum as revenue, o_orderdate")
+                    .orderBy("revenue.desc,o_orderdate")
+                    .fetch(10);
+
+            TableSink<Row> q3Sink = new CsvTableSink(SinkPath, ",");
+            q3.writeToSink(q3Sink);
+        }
+
+        //******************************* Query 4 **************************************
+
+        if (q_num == 4) {
+
+            Table temp_order = tableEnv
+                    .sqlQuery("Select * from orders where o_orderdate >= '1996-8-01' and o_orderdate < '1996-11-01' ");
+//                    .filter("o_orderdate >= '1996-8-01' ")
+//                    .filter("o_orderdate < '1996-11-01' ");
+            Table temp_lineitem = lineitem
+                    .filter("l_commitdate < l_receiptdate")
+                    .select("l_orderkey").distinct();
+            Table q4 = temp_order
+                    .join(temp_lineitem, "l_orderkey == o_orderkey")
+                    .groupBy("o_orderpriority")
+                    .select("o_orderpriority.count as o_orderpriority_count")
+                    .orderBy("o_orderpriority_count");
+
+            TableSink<Row> q4Sink = new CsvTableSink(SinkPath, ",");
+            q4.writeToSink(q4Sink);
+        }
+
+        //******************************* Query 5 **************************************
+
+        if (q_num == 5) {
+
+            Table temp_order = tableEnv
+                    .sqlQuery("select * from orders where o_orderdate >= date '1994-01-01' and o_orderdate < date '1995-01-01'");
+//                    .filter("o_orderdate >= date '1994-01-01'")
+//                    .filter("o_orderdate < date '1995-01-01'");
+            Table join1 = region
+                    .filter("r_name = 'EUROPE'")
+                    .join(nation,"r_regionkey == n_regionkey")
+                    .join(supplier, "n_nationkey == s_nationkey")
+                    .join (lineitem, "s_suppkey == l_suppkey");
+            Table q5 = join1
+                    .join(temp_order, "l_orderkey == o_orderkey")
+                    .join(customer, "s_nationkey == c_nationkey && o_custkey == c_custkey")
+                    .groupBy("n_name")
+                    .select("(l_extendedprice * (1 - l_discount)).sum as revenue")
+                    .orderBy("revenue");
+
+            TableSink<Row> q5Sink = new CsvTableSink(SinkPath, ",");
+            q5.writeToSink(q5Sink);
+        }
+
+        //******************************* Query 6 **************************************
+
+        if (q_num == 6) {
+
+            Table temp_lineitem = tableEnv
+                    .sqlQuery("select * from lineitem where l_shipdate >= '1994-01-01' and l_shipdate < '1995-01-01'")
+//                    .filter("l_shipdate >= '1994-01-01'")
+//                    .filter("l_shipdate < '1995-01-01'")
+                    .filter("l_discount >= 0.04")
+                    .filter("l_discount <= 0.06")
+                    .filter("l_quantity < 24");
+            Table q6 = temp_lineitem
+                    .select("(l_extendedprice * l_discount).sum as revenue");
+
+            TableSink<Row> q6Sink = new CsvTableSink(SinkPath, ",");
+            q6.writeToSink(q6Sink);
+        }
+
+
+        //******************************* Query 7 **************************************
+
+        if (q_num == 7) {
+
+            Table temp_cust_nation = nation
+                    .filter("n_name = 'INDIA' || n_name = 'EGYPT'")
+                    .select(
+                            "n_nationkey as cust_n_nationkey, " +
+                                    "n_name as cust_nation, " +
+                                    "n_regionkey as cust_n_regionkey, " +
+                                    "n_comment as cust_n_comment"
+                    );
+            Table temp_sup_nation = nation
+                    .filter("n_name = 'INDIA' || n_name = 'EGYPT'")
+                    .select(
+                            "n_nationkey as supp_n_nationkey, " +
+                                    "n_name as supp_nation, " +
+                                    "n_regionkey as supp_n_regionkey, " +
+                                    "n_comment as supp_n_comment"
+                    );
+            Table temp_lineitem = tableEnv
+                    .sqlQuery("select * from lineitem where l_shipdate >= '1995-01-01' and l_shipdate <= '1996-12-31'");
+//                    .filter("l_shipdate >= '1995-01-01' and l_shipdate <= '1996-12-31'");
+            Table sup_nation = temp_lineitem
+                    .join(supplier, "l_suppkey == s_suppkey" )
+                    .join(temp_sup_nation , "s_nationkey == supp_n_nationkey");
+            Table cust_nation = order
+                    .join(customer, "o_custkey == c_custkey")
+                    .join(temp_cust_nation, "c_nationkey == cust_n_nationkey");
+
+            Table join1 = cust_nation
+                    .join(sup_nation ,"o_orderkey == l_orderkey") ;
+            Table res1 = join1
+                    .filter("supp_nation = 'INDIA'")
+                    .filter("cust_nation = 'EGYPT'");
+            Table res2 = join1
+                    .filter("supp_nation = 'EGYPT'")
+                    .filter("cust_nation = 'INDIA'");
+
+            Table q7 = res1
+                    .union(res2)
+                    .groupBy("supp_nation,cust_nation,l_shipdate")
+                    .select("supp_nation,cust_nation,(l_extendedprice * (1 - l_discount)).sum as revenue,(l_shipdate.substring(0,4)) as l_year")
+                    .orderBy("supp_nation,cust_nation,l_year");
+
+            TableSink<Row> q7Sink = new CsvTableSink(SinkPath, ",");
+            q7.writeToSink(q7Sink);
+        }
+
+        //******************************* Query 8 **************************************
+
+        if (q_num == 8) {
+
+            Table temp_region = region
+                    .filter("r_name == 'ASIA'");
+            Table temp_order = tableEnv
+                    .sqlQuery("select * from orders where o_orderdate <= '1996-12-31' and o_orderdate >= '1995-01-01'");
+//                    .filter("o_orderdate <= '1996-12-31' ")
+//                    .filter(" o_orderdate >= '1995-01-01' ")
+            Table tepm_part = part
+                    .filter("p_type == 'ECONOMY ANODIZED STEEL'");
+            Table res1 = nation
+                    .join(supplier, "n_nationkey == s_nationkey");
+            Table res2 = lineitem
+                    .select("l_partkey,l_suppkey,l_orderkey,(l_extendedprice * (1 - l_discount)) as volume")
+                    .join(tepm_part, "l_partkey == p_partkey")
+                    .join(res1, "l_suppkey == s_suppkey");
+            Table q8_temp = nation
+                    .join(temp_region, "n_regionkey == r_regionkey")
+                    .select("n_nationkey")
+                    .join(customer, "n_nationkey == c_nationkey")
+                    .select("c_custkey")
+                    .join(temp_order, "c_custkey == o_custkey")
+                    .select("o_orderkey,o_orderdate.substring(0,4) as o_year")
+                    .join(res2, "o_orderkey == l_orderkey");
+            tableEnv.registerTable("q8_temp", q8_temp);
+            Table q8_semi = tableEnv.sqlQuery(
+                    "select o_year,volume,case when n_name = 'BRAZIL' then volume else 0 end as case_volume from q8_temp"
+            );
+            Table q8 = q8_semi
+//                            .select("o_orderdate.substring(0,4) as o_year, volume, (when(n_name.like('%BRAZIL%'),volume)) as case_volume")
+                    .groupBy("o_year")
+                    .select("(case_volume.sum / volume.sum) as mkt_share, o_year")
+                    .orderBy("o_year");
+
+            TableSink<Row> q8Sink = new CsvTableSink(SinkPath, ",");
+            q8.writeToSink(q8Sink);
+        }
+
+        //******************************* Query 9 **************************************
+
+        if (q_num == 9) {
+
+
+            Table line_part = part
+                    .filter("p_name.like('%hot%')")
+                    .join(lineitem, "p_partkey == l_partkey");
+
+            Table sup_nat = nation
+                    .join(supplier, "n_nationkey== s_nationkey");
+
+            Table res1 = line_part
+                    .join(sup_nat,"l_suppkey == s_suppkey")
+                    .join(partsupp, "(l_suppkey == ps_suppkey) && (l_partkey == ps_partkey)");
+            Table q9 = res1
+                    .join(order, "l_orderkey == o_orderkey")
+                    .groupBy("n_name,o_orderdate")
+                    .select("(l_extendedprice * (1 - l_discount) - (ps_supplycost * l_quantity)).sum" +
+                            " as sum_profit, n_name, o_orderdate.substring(0,4) as o_year")
+                    .orderBy("n_name, o_year.desc");
+
+            TableSink<Row> q9Sink = new CsvTableSink(SinkPath, ",");
+            q9.writeToSink(q9Sink);
+        }
+
+        //******************************* Query 10 **************************************
+
+        if (q_num == 10) {
+            Table temp_lineitem = lineitem
+                    .filter("l_returnflag = 'R'");
+
+            Table q10 = tableEnv
+                    .sqlQuery("Select * from orders where o_orderdate < '1995-01-01' and o_orderdate >= '1994-10-01'")
+//            .filter("o_orderdate < ('1995-01-01').DATE ")
+//            .filter("o_orderdate >= '1994-10-01' ")
+                    .join(customer, "o_custkey == c_custkey")
+                    .join(nation, "c_nationkey == n_nationkey")
+                    .join(temp_lineitem, "o_orderkey == l_orderkey")
+                    .groupBy("c_custkey,c_name,c_acctbal,n_name,c_address,c_phone,c_comment")
+                    .select("(l_extendedprice * (1 - l_discount)).sum as revenue")
+                    .orderBy("revenue.desc")
+                    .fetch(20);
+
+            TableSink<Row> q10Sink = new CsvTableSink(SinkPath, ",");
+            q10.writeToSink(q10Sink);
+        }
+
+        //******************************* Query 11 **************************************
+
+        if (q_num == 11) {
+
+            Table temp_join = nation
+                    .filter("n_name = 'INDIA'")
+                    .join(supplier, "n_nationkey == s_nationkey")
+                    .join(partsupp, "s_suppkey == ps_suppkey")
+                    .select("ps_partkey,(ps_supplycost * ps_availqty) as value");
+
+            Table temp_total = temp_join
+                    .groupBy("value")
+                    .select("value.sum as total_value");
+            Table tmp = temp_join
+                    .groupBy("ps_partkey")
+                    .select("value.sum as partVal");
+
+//            Table q11 = tmp
+//                    .join(temp_total, "(partVal > (total_value * 0.0001))")
+            DataSet<Tuple2<Float, Float>> temp_DS = tableEnv
+                    .toDataSet(tmp, Float.class)
+                    .cross(tableEnv.toDataSet(temp_total, Float.class))
+                    .filter(row -> (row.f0 > row.f1 * 0.0001));
+            tableEnv.registerDataSet("q11_temp", temp_DS, "partVal, total_value");
+            Table q11 = tableEnv
+                    .scan("q11_temp")
+                    .orderBy("partVal.desc");
+
+            TableSink<Row> q11Sink = new CsvTableSink(SinkPath, ",");
+            q11.writeToSink(q11Sink);
+        }
+
+        //******************************* Query 12 **************************************
+
+        if (q_num == 12) {
+            Table q12_temp = tableEnv
+                    .sqlQuery("select * from lineitem where l_receiptdate >= '1994-01-01' and l_receiptdate < '1995-01-01'")
+                    .filter("l_shipmode == 'TRUCK' || l_shipmode == 'AIR'")
+                    .filter("l_commitdate < l_receiptdate")
+                    .filter("l_shipdate < l_commitdate")
+                    .join(order, "l_orderkey == o_orderkey")
+                    .select("l_shipmode,o_orderpriority");
+            tableEnv.registerTable("q12_temp", q12_temp);
+            Table q12 = tableEnv
+                    .sqlQuery("select l_shipmode, sum(" +
+                            "case when o_orderpriority = '1-URGENT' " +
+                            "or o_orderpriority = '2-HIGH' " +
+                            "then 1 " +
+                            "else 0 " +
+                            "end) as high_line_count, " +
+                            "sum(" +
+                            "case when o_orderpriority <> '1-URGENT' " +
+                            "and o_orderpriority <> '2-HIGH' " +
+                            "then 1 else 0 end) as low_line_count from q12_temp group by l_shipmode")
+                    .orderBy("l_shipmode");
+
+
+
+            TableSink<Row> q12Sink = new CsvTableSink(SinkPath, ",");
+            q12.writeToSink(q12Sink);
+        }
+
+        //******************************* Query 13 **************************************
+
+        if (q_num == 13) {
+            Table temp_order = order
+                    .filter("! o_comment.like('%unusual%requests%')");
+            Table q13 =  customer
+                    .leftOuterJoin(temp_order, "c_custkey == o_custkey")
+                    .groupBy("o_custkey")
+                    .select("o_custkey ,o_orderkey.count as c_count")
+                    .groupBy("c_count")
+                    .select("c_count, o_custkey.count as custdist")
+                    .orderBy("custdist.desc,c_count.desc");
+
+
+
+            TableSink<Row> q13Sink = new CsvTableSink(SinkPath, ",");
+            q13.writeToSink(q13Sink);
+        }
+
+        //******************************* Query 14 **************************************
+
+        if (q_num == 14) {
+            Table temp = part
+                    .join(lineitem, "p_partkey == l_partkey");
+            tableEnv.registerTable("temp", temp);
+            Table temp_part = tableEnv
+                    .sqlQuery("select p_type, l_extendedprice,l_discount, (l_extendedprice *(1 - l_discount)) as promo_revenue from temp where l_shipdate > '1994-10-01' and l_shipdate <= '1994-11-01'");
+//                    .filter("l_shipdate > '1994-10-01'")
+//                    .filter("l_shipdate <= '1994-11-01'"))
+            tableEnv.registerTable("temp_part", temp_part);
+            Table q14 = tableEnv
+                    .sqlQuery("select 100.00 * sum(case " +
+                            "when p_type like ('%PROMO%') " +
+                            "then (l_extendedprice * (1 - l_discount)) " +
+                            "else 0 end) / sum(l_extendedprice * (1 - l_discount)) as promo_revenue from temp_part");
+
+
+
+            TableSink<Row> q14Sink = new CsvTableSink(SinkPath, ",");
+            q14.writeToSink(q14Sink);
+        }
+
+        //******************************* Query 15 **************************************
+
+        if (q_num == 15) {
+            Table revenue = tableEnv
+                    .sqlQuery("select * from lineitem where l_shipdate >= '1994-10-01' and l_shipdate < '1995-01-01'")
+                    .groupBy("l_suppkey")
+                    .select("(l_extendedprice * ( 1 - l_discount)).sum as total, l_suppkey");
+            Table max = revenue
+                    .groupBy("total")
+                    .select("total.max as max_total");
+            Table tmp = max
+                    .join(revenue, "max_total == total");
+            Table q15 = tmp
+                    .join(supplier, "l_suppkey == s_suppkey")
+                    .orderBy("s_suppkey");
+
+
+
+
+            TableSink<Row> q15Sink = new CsvTableSink(SinkPath, ",");
+            q15.writeToSink(q15Sink);
+        }
+
+        //******************************* Query 16 **************************************
+
+        if (q_num == 16) {
+            Table temp_parts = tableEnv.sqlQuery("select * from part where p_size IN (38, 23, 15, 9, 28, 42, 12, 49)")
+                    .filter("p_brand != 'Brand#23'")
+                    .filter(" ! p_type.like('%MEDIUM POLISHED%')")
+//                    .filter("p_size IN (38, 23, 15, 9, 28, 42, 12, 49)")
+                    .select("p_partkey, p_brand, p_type, p_size");
+            Table res1 = supplier
+                    .filter("s_comment.like('%Customer%Complaints%')")
+                    .join(partsupp, "s_suppkey == ps_suppkey")
+                    .select("ps_partkey, ps_suppkey");
+            Table q16 = res1.join(temp_parts, "ps_partkey == p_partkey")
+                    .groupBy("p_brand, p_type, p_size")
+                    .select("ps_suppkey.count.distinct as supplier_count, p_brand, p_size, p_type")
+                    .orderBy("supplier_count.desc, p_brand, p_type, p_size, p_type");
+
+
+            TableSink<Row> q16Sink = new CsvTableSink(SinkPath, ",");
+            q16.writeToSink(q16Sink);
+        }
+
+        //******************************* Query 17 **************************************
+
+        if (q_num == 17) {
+
+            Table temp_part = part
+                    .filter("p_brand== 'Brand#34'")
+                    .filter("p_container == 'MED BOX'")
+                    .select("p_partkey")
+                    .leftOuterJoin(lineitem, "p_partkey == l_partkey");
+
+            Table temp_part1 = temp_part
+                    .groupBy("p_partkey")
+                    .select("(l_quantity.avg *0.2) as avg_quantity, p_partkey as key");
+
+            Table q17 = temp_part1
+                    .join(temp_part, "key == p_partkey")
+                    .filter("l_quantity < avg_quantity")
+                    .groupBy("l_extendedprice")
+                    .select("l_extendedprice.sum / 7.0");
+
+
+            TableSink<Row> q17Sink = new CsvTableSink(SinkPath, ",");
+            q17.writeToSink(q17Sink);
+        }
+
+        //******************************* Query 18 **************************************
+
+        if (q_num == 18) {
+
+            Table q18 = lineitem
+                    .groupBy("l_orderkey")
+                    .select("l_quantity.sum as sum_quantity, l_orderkey")
+                    .filter("sum_quantity > 313 ")
+                    .join(order, "l_orderkey == o_orderkey")
+                    .join(customer, "c_custkey == o_custkey")
+                    .select("sum_quantity, c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice")
+                    .groupBy("c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice")
+                    .select("sum_quantity.sum, o_totalprice, o_orderdate")
+                    .orderBy("o_totalprice.desc, o_orderdate")
+                    .fetch(100);
+
+
+            TableSink<Row> q18Sink = new CsvTableSink(SinkPath, ",");
+            q18.writeToSink(q18Sink);
+        }
+
+        //******************************* Query 19 **************************************
+
+        if (q_num == 19) {
+
+            Table temp_ljoin= part
+                    .join(lineitem, "p_partkey == l_partkey")
+                    .filter("l_shipmode = 'AIR' || l_shipmode = 'AIR REG'")
+                    .filter("l_shipinstruct == 'DELIVER IN PERSON'");
+
+            tableEnv.registerTable("temp_ljoin", temp_ljoin);
+            Table temp_part1 = tableEnv.sqlQuery("select * from temp_ljoin where p_container in ('SM CASE','SM BOX','SM PACK','SM PKG')")
+                    .filter("p_brand = 'Brand#34'")
+//                    .filter("p_container.isin(sm)")
+                    .filter("l_quantity >= 9")
+                    .filter("l_quantity <= 19")
+                    .filter("p_size >= 1")
+                    .filter("p_size <= 5");
+
+
+            Table temp_part2 = tableEnv.sqlQuery("select * from temp_ljoin where p_container in ('MED BAG','MED BOX','MED PKG','MED PACK')")
+                    .filter("p_brand = 'Brand#12'")
+//                    .filter("p_container.isin(md)")
+                    .filter("l_quantity >= 15")
+                    .filter("l_quantity <= 25")
+                    .filter("p_size >= 1")
+                    .filter("p_size <= 10");
+
+            Table temp_part3 = tableEnv.sqlQuery("select * from temp_ljoin where p_container in ('LG CASE','LG BOX','LG PACK','LG PKG')")
+                    .filter("p_brand = 'Brand#23'")
+//                    .filter(part.P_CONTAINER.isin(lg))
+                    .filter("l_quantity >= 24")
+                    .filter("l_quantity <= 34")
+                    .filter("p_size >= 1")
+                    .filter("p_size <= 15");
+
+            Table q19 = temp_part1
+                    .union(temp_part2)
+                    .union(temp_part3)
+                    .groupBy("l_extendedprice, l_discount")
+                    .select("(l_extendedprice * ( 1 - l_discount)).sum as revenue");
+
+            TableSink<Row> q19Sink = new CsvTableSink(SinkPath, ",");
+            q19.writeToSink(q19Sink);
+        }
+
+        //******************************* Query 20 **************************************
+
+        if (q_num == 20) {
+
+            Table temp_lineitem = tableEnv.sqlQuery("select * from lineitem where l_shipdate >= '1994-01-01' and l_shipdate < '1998-01-01'")
+//                    .filter("L_SHIPDATE >= '1994-01-01'")
+//                    .filter("L_SHIPDATE < '1998-01-01'")
+                    .groupBy("l_partkey, l_suppkey")
+                    .select("(l_quantity.sum * 0.5) as sum_quantity,l_partkey,l_suppkey");
+            Table temp_nation = nation
+                    .filter("n_name == 'CANADA'");
+            Table nat_supp = supplier
+                    .select("s_suppkey, s_name, s_nationkey, s_address")
+                    .join(temp_nation, "s_nationkey == n_nationkey");
+            Table res1 = part
+                    .filter("p_name.like('%forest%')")
+                    .select("p_partkey").distinct()
+                    .join(partsupp, "p_partkey == ps_partkey")
+                    .join(temp_lineitem, "(ps_partkey == l_partkey) && (ps_suppkey == l_suppkey)");
+            Table res2 = res1
+                    .filter("ps_availqty > sum_quantity")
+                    .select("ps_suppkey").distinct();
+            Table q20 = res2
+                    .join(nat_supp, "ps_suppkey == s_suppkey")
+                    .select("s_name, s_address")
+                    .orderBy("s_name");
+            TableSink<Row> q20Sink = new CsvTableSink(SinkPath, ",");
+            q20.writeToSink(q20Sink);
+        }
+
+        //******************************* Query 21 **************************************
+
+        if (q_num == 21) {
+
+            Table f_supplier = supplier
+                    .select("s_suppkey, s_nationkey, s_name");
+
+            Table p_lineitem = lineitem
+                    .select("l_suppkey, l_orderkey, l_receiptdate, l_commitdate");
+
+            Table f_lineitem = p_lineitem
+                    .filter("l_receiptdate > l_commitdate");
+
+            Table line1 = p_lineitem
+                    .groupBy("l_orderkey")
+                    .select("l_suppkey.count.distinct as suppkey_count, l_suppkey.max as suppkey_max, l_orderkey as key");
+
+            Table line2 = f_lineitem
+                    .groupBy("l_orderkey")
+                    .select("l_suppkey.count.distinct as suppkey_count, l_suppkey.max as suppkey_max, l_orderkey as key");
+
+            Table f_order = order
+                    .select("o_orderkey, o_orderstatus")
+                    .filter("o_orderstatus = 'F'");
+
+            Table f_nation = nation
+                    .filter("n_name = 'CANADA'")
+                    .join(f_supplier, "n_nationkey == s_nationkey")
+                    .join(f_lineitem, "s_suppkey == l_suppkey")
+                    .join(f_order, "l_orderkey == o_orderkey")
+                    .join(line1, "l_orderkey == key")
+                    .filter("suppkey_count > 1 || ((suppkey_count == 1) && (l_suppkey == suppkey_max))")
+                    .select("s_name, l_orderkey, l_suppkey");
+            Table q21 = f_nation
+                    .leftOuterJoin(line2, "l_orderkey == key")
+                    .select("s_name, l_orderkey, l_suppkey, suppkey_count, suppkey_max")
+                    .filter("suppkey_count == 1 && l_suppkey == suppkey_max")
+                    .groupBy("s_name")
+                    .select("l_suppkey.count as numwait, s_name")
+                    .orderBy("numwait.desc, s_name")
+                    .fetch(100);
+            TableSink<Row> q21Sink = new CsvTableSink(SinkPath, ",");
+            q21.writeToSink(q21Sink);
+        }
+
+        //******************************* Query 22 **************************************
+
+        if (q_num == 22) {
+
+            Table flineitem = tableEnv
+                    .sqlQuery("select * from lineitem where l_shipdate >= '1994-01-01' and l_shipdate < '1998-01-01'")
+//                    .filter("L_SHIPDATE >= '1994-01-01'")
+//                    .filter("L_SHIPDATE < '1998-01-01'")
+                    .groupBy("l_partkey, l_suppkey")
+                    .select("(l_quantity.sum * 0.5) as sum_quantity, l_partkey, l_suppkey");
+            Table fnation = nation
+                    .filter("n_name == 'CANADA'");
+            Table nat_supp = supplier
+                    .select("s_suppkey, s_name, s_nationkey, s_address")
+                    .join(fnation, "s_nationkey == n_nationkey");
+            Table res1 = part
+                    .filter("p_name.like('%forest%')")
+                    .select("p_partkey")
+                    .distinct()
+                    .join(partsupp, "p_partkey == ps_partkey")
+                    .join(flineitem, "(ps_partkey == l_partkey) && (ps_suppkey == l_suppkey)");
+            Table res2 = res1
+                    .filter("ps_availqty > sum_quantity")
+                    .select("ps_suppkey")
+                    .distinct();
+            Table q22 = res2
+                    .join(nat_supp, "ps_suppkey == s_suppkey")
+                    .select("s_name, s_address")
+                    .orderBy("s_name");
+
+
+            TableSink<Row> q22Sink = new CsvTableSink(SinkPath, ",");
+            q22.writeToSink(q22Sink);
+        }
+        env.execute();
+
+        System.out.println("The execution time for the query number " + q_num + " is: " + (System.currentTimeMillis() - START) / 1000 + " Secs");
+    }
+}
+
