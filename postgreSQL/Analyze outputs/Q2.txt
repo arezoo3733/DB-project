@@ -1,0 +1,63 @@
+                                                                                     QUERY PLAN                                                                                      
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=6420348.30..6420348.31 rows=1 width=270) (actual time=6648342.004..6648546.520 rows=100 loops=1)
+   ->  Sort  (cost=6420348.30..6420348.31 rows=1 width=270) (actual time=6648342.002..6648342.010 rows=100 loops=1)
+         Sort Key: supplier.s_acctbal DESC, nation.n_name, supplier.s_name, part.p_partkey
+         Sort Method: top-N heapsort  Memory: 71kB
+         ->  Merge Join  (cost=2554912.68..6420348.29 rows=1 width=270) (actual time=2128094.125..6648213.812 rows=47122 loops=1)
+               Merge Cond: (part.p_partkey = partsupp.ps_partkey)
+               Join Filter: (partsupp.ps_supplycost = (SubPlan 1))
+               Rows Removed by Join Filter: 16697
+               ->  Gather Merge  (cost=1000.46..865850.41 rows=65596 width=30) (actual time=9.373..761.958 rows=79626 loops=1)
+                     Workers Planned: 2
+                     Workers Launched: 2
+                     ->  Parallel Index Scan using part_pkey on part  (cost=0.44..857278.98 rows=27332 width=30) (actual time=2.525..154113.604 rows=26542 loops=3)
+                           Filter: (((p_type)::text ~~ '%NICKEL'::text) AND (p_size = 50))
+                           Rows Removed by Filter: 6640125
+               ->  Materialize  (cost=2553872.66..2556539.61 rows=533391 width=254) (actual time=2126219.974..2471877.181 rows=16042547 loops=1)
+                     ->  Sort  (cost=2553872.66..2555206.14 rows=533391 width=254) (actual time=2126219.921..2469383.146 rows=16042547 loops=1)
+                           Sort Key: partsupp.ps_partkey
+                           Sort Method: external merge  Disk: 3027976kB
+                           ->  Gather  (cost=29868.48..2375510.28 rows=533391 width=254) (actual time=581443.437..1347527.297 rows=16042800 loops=1)
+                                 Workers Planned: 2
+                                 Workers Launched: 2
+                                 ->  Parallel Hash Join  (cost=28868.48..2321171.18 rows=222246 width=254) (actual time=582417.818..1230045.558 rows=5347600 loops=3)
+                                       Hash Cond: (partsupp.ps_suppkey = supplier.s_suppkey)
+                                       ->  Parallel Seq Scan on partsupp  (cost=0.00..2166363.17 rows=33336917 width=22) (actual time=7.889..554012.455 rows=26666667 loops=3)
+                                       ->  Parallel Hash  (cost=28833.75..28833.75 rows=2778 width=244) (actual time=6069.625..6069.625 rows=66845 loops=3)
+                                             Buckets: 16384 (originally 8192)  Batches: 16 (originally 1)  Memory Usage: 2720kB
+                                             ->  Hash Join  (cost=23.80..28833.75 rows=2778 width=244) (actual time=183.852..5924.335 rows=66845 loops=3)
+                                                   Hash Cond: (supplier.s_nationkey = nation.n_nationkey)
+                                                   ->  Parallel Seq Scan on supplier  (cost=0.00..27219.67 rows=416667 width=148) (actual time=33.676..5679.961 rows=333333 loops=3)
+                                                   ->  Hash  (cost=23.79..23.79 rows=1 width=108) (actual time=150.143..150.143 rows=5 loops=3)
+                                                         Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                         ->  Hash Join  (cost=11.89..23.79 rows=1 width=108) (actual time=150.120..150.130 rows=5 loops=3)
+                                                               Hash Cond: (nation.n_regionkey = region.r_regionkey)
+                                                               ->  Seq Scan on nation  (cost=0.00..11.50 rows=150 width=116) (actual time=150.025..150.029 rows=25 loops=3)
+                                                               ->  Hash  (cost=11.88..11.88 rows=1 width=4) (actual time=0.049..0.049 rows=1 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                                     ->  Seq Scan on region  (cost=0.00..11.88 rows=1 width=4) (actual time=0.040..0.041 rows=1 loops=3)
+                                                                           Filter: (r_name = 'EUROPE'::bpchar)
+                                                                           Rows Removed by Filter: 4
+               SubPlan 1
+                 ->  Aggregate  (cost=1713.23..1713.24 rows=1 width=32) (actual time=65.372..65.372 rows=1 loops=63819)
+                       ->  Nested Loop  (cost=12.88..1713.23 rows=1 width=6) (actual time=63.036..65.362 rows=2 loops=63819)
+                             Join Filter: (supplier_1.s_nationkey = nation_1.n_nationkey)
+                             Rows Removed by Join Filter: 18
+                             ->  Hash Join  (cost=11.89..23.79 rows=1 width=4) (actual time=0.009..0.020 rows=5 loops=63819)
+                                   Hash Cond: (nation_1.n_regionkey = region_1.r_regionkey)
+                                   ->  Seq Scan on nation nation_1  (cost=0.00..11.50 rows=150 width=12) (actual time=0.005..0.008 rows=25 loops=63819)
+                                   ->  Hash  (cost=11.88..11.88 rows=1 width=4) (actual time=70.683..70.684 rows=1 loops=1)
+                                         Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                         ->  Seq Scan on region region_1  (cost=0.00..11.88 rows=1 width=4) (actual time=70.668..70.670 rows=1 loops=1)
+                                               Filter: (r_name = 'EUROPE'::bpchar)
+                                               Rows Removed by Filter: 4
+                             ->  Nested Loop  (cost=0.99..1687.37 rows=166 width=14) (actual time=9.532..13.067 rows=4 loops=319095)
+                                   ->  Index Scan using partsupp_pkey on partsupp partsupp_1  (cost=0.57..301.91 rows=166 width=14) (actual time=8.418..8.835 rows=4 loops=319095)
+                                         Index Cond: (part.p_partkey = ps_partkey)
+                                   ->  Index Scan using supplier_pkey on supplier supplier_1  (cost=0.42..8.35 rows=1 width=12) (actual time=1.057..1.057 rows=1 loops=1276380)
+                                         Index Cond: (s_suppkey = partsupp_1.ps_suppkey)
+ Planning Time: 498.141 ms
+ Execution Time: 6648646.821 ms
+(59 rows)
+

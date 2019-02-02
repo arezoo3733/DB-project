@@ -1,0 +1,34 @@
+  QUERY PLAN
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+------------------------------
+ Finalize GroupAggregate  (cost=22959365.21..22983751.13 rows=7 width=27) (actua
+l time=15357985.801..15357985.820 rows=2 loops=1)
+   Group Key: lineitem.l_shipmode
+   ->  Gather Merge  (cost=22959365.21..22983750.95 rows=14 width=27) (actual ti
+me=15356889.091..15454237.589 rows=2 loops=1)
+         Workers Planned: 2
+         Workers Launched: 0
+         ->  Partial GroupAggregate  (cost=22958365.18..22982749.31 rows=7 width
+=27) (actual time=15356888.548..15357985.228 rows=2 loops=1)
+               Group Key: lineitem.l_shipmode
+               ->  Sort  (cost=22958365.18..22961413.19 rows=1219203 width=27) (
+actual time=15355822.069..15356730.735 rows=3116321 loops=1)
+                     Sort Key: lineitem.l_shipmode
+                     Sort Method: external merge  Disk: 112880kB
+                     ->  Parallel Hash Join  (cost=4548985.35..22776773.96 rows=
+1219203 width=27) (actual time=10909308.649..15324444.860 rows=3116321 loops=1)
+                           Hash Cond: (lineitem.l_orderkey = orders.o_orderkey)
+                           ->  Parallel Seq Scan on lineitem  (cost=0.00..17844105.20 rows=1219203 width=19) (actual time=0.128..8754903.465 rows=3116321 loops=1)
+                                 Filter: ((l_shipmode = ANY ('{TRUCK,AIR}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receipt
+date >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))
+                                 Rows Removed by Filter: 596921581
+                           ->  Parallel Hash  (cost=3401574.60..3401574.60 rows=62497260 width=20) (actual time=2115954.762..2115954.762 rows=150000000 loops=1)
+                                 Buckets: 65536  Batches: 4096  Memory Usage: 2592kB
+                                 ->  Parallel Seq Scan on orders  (cost=0.00..3401574.60 rows=62497260 width=20) (actual time=0.026..1958948.269 rows=150000000 loops=1)
+ Planning Time: 1.951 ms
+ Execution Time: 15454286.156 ms
+(20 rows)

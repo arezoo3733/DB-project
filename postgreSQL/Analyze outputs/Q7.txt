@@ -1,0 +1,52 @@
+                                                                                       QUERY PLAN                                                                                       
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize GroupAggregate  (cost=21069492.29..21071632.11 rows=10024 width=248) (actual time=15137933.192..15138112.328 rows=4 loops=1)
+   Group Key: n1.n_name, n2.n_name, (date_part('year'::text, (lineitem.l_shipdate)::timestamp without time zone))
+   ->  Gather Merge  (cost=21069492.29..21071287.84 rows=13508 width=248) (actual time=15137874.412..15138717.126 rows=12 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         ->  Partial GroupAggregate  (cost=21068492.27..21068728.66 rows=6754 width=248) (actual time=15137651.371..15137835.053 rows=4 loops=3)
+               Group Key: n1.n_name, n2.n_name, (date_part('year'::text, (lineitem.l_shipdate)::timestamp without time zone))
+               ->  Sort  (cost=21068492.27..21068509.15 rows=6754 width=228) (actual time=15137583.470..15137680.477 rows=194877 loops=3)
+                     Sort Key: n1.n_name, n2.n_name, (date_part('year'::text, (lineitem.l_shipdate)::timestamp without time zone))
+                     Sort Method: external merge  Disk: 16536kB
+                     Worker 0:  Sort Method: external merge  Disk: 16960kB
+                     Worker 1:  Sort Method: external merge  Disk: 16672kB
+                     ->  Parallel Hash Join  (cost=4756692.78..21068062.66 rows=6754 width=228) (actual time=14938301.824..15136698.342 rows=194877 loops=3)
+                           Hash Cond: (lineitem.l_orderkey = orders.o_orderkey)
+                           Join Filter: (((n1.n_name = 'INDIA'::bpchar) AND (n2.n_name = 'EGYPT'::bpchar)) OR ((n1.n_name = 'EGYPT'::bpchar) AND (n2.n_name = 'INDIA'::bpchar)))
+                           Rows Removed by Join Filter: 194817
+                           ->  Parallel Hash Join  (cost=28426.04..16284697.65 rows=1006312 width=128) (actual time=146042.887..8234051.280 rows=4872818 loops=3)
+                                 Hash Cond: (lineitem.l_suppkey = supplier.s_suppkey)
+                                 ->  Parallel Seq Scan on lineitem  (cost=0.00..15969053.80 rows=75473405 width=32) (actual time=0.059..8060290.168 rows=60767063 loops=3)
+                                       Filter: ((l_shipdate >= '1995-01-01'::date) AND (l_shipdate <= '1996-12-31'::date))
+                                       Rows Removed by Filter: 139245571
+                                 ->  Parallel Hash  (cost=28356.60..28356.60 rows=5555 width=108) (actual time=146042.653..146042.653 rows=26731 loops=3)
+                                       Buckets: 131072 (originally 16384)  Batches: 1 (originally 1)  Memory Usage: 6976kB
+                                       ->  Hash Join  (cost=12.28..28356.60 rows=5555 width=108) (actual time=435.008..145089.022 rows=26731 loops=3)
+                                             Hash Cond: (supplier.s_nationkey = n1.n_nationkey)
+                                             ->  Parallel Seq Scan on supplier  (cost=0.00..27219.67 rows=416667 width=12) (actual time=402.994..144982.342 rows=333333 loops=3)
+                                             ->  Hash  (cost=12.25..12.25 rows=2 width=108) (actual time=31.946..31.948 rows=2 loops=3)
+                                                   Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                   ->  Seq Scan on nation n1  (cost=0.00..12.25 rows=2 width=108) (actual time=31.920..31.929 rows=2 loops=3)
+                                                         Filter: ((n_name = 'INDIA'::bpchar) OR (n_name = 'EGYPT'::bpchar))
+                                                         Rows Removed by Filter: 23
+                           ->  Parallel Hash  (cost=4704015.53..4704015.53 rows=833297 width=108) (actual time=6623809.122..6623809.122 rows=3993142 loops=3)
+                                 Buckets: 32768 (originally 32768)  Batches: 256 (originally 128)  Memory Usage: 3264kB
+                                 ->  Parallel Hash Join  (cost=452894.12..4704015.53 rows=833297 width=108) (actual time=6113884.814..6617581.780 rows=3993142 loops=3)
+                                       Hash Cond: (orders.o_custkey = customer.c_custkey)
+                                       ->  Parallel Seq Scan on orders  (cost=0.00..3401574.60 rows=62497260 width=12) (actual time=0.051..5146915.126 rows=50000000 loops=3)
+                                       ->  Parallel Hash  (cost=450468.51..450468.51 rows=83329 width=108) (actual time=876033.429..876033.429 rows=400070 loops=3)
+                                             Buckets: 32768 (originally 32768)  Batches: 32 (originally 8)  Memory Usage: 2688kB
+                                             ->  Hash Join  (cost=12.28..450468.51 rows=83329 width=108) (actual time=7.669..864764.014 rows=400070 loops=3)
+                                                   Hash Cond: (customer.c_nationkey = n2.n_nationkey)
+                                                   ->  Parallel Seq Scan on customer  (cost=0.00..433587.41 rows=6249641 width=12) (actual time=7.020..863345.068 rows=5000000 loops=3)
+                                                   ->  Hash  (cost=12.25..12.25 rows=2 width=108) (actual time=0.614..0.614 rows=2 loops=3)
+                                                         Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                         ->  Seq Scan on nation n2  (cost=0.00..12.25 rows=2 width=108) (actual time=0.600..0.606 rows=2 loops=3)
+                                                               Filter: ((n_name = 'EGYPT'::bpchar) OR (n_name = 'INDIA'::bpchar))
+                                                               Rows Removed by Filter: 23
+ Planning Time: 850.994 ms
+ Execution Time: 15138720.903 ms
+(48 rows)
+

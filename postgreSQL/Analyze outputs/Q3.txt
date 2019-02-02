@@ -1,0 +1,38 @@
+                                                                                          QUERY PLAN                                                                                          
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=29989435.36..29989435.39 rows=10 width=48) (actual time=7166161.756..7167000.557 rows=10 loops=1)
+   ->  Sort  (cost=29989435.36..30068790.97 rows=31742244 width=48) (actual time=7166161.754..7166161.755 rows=10 loops=1)
+         Sort Key: (sum((lineitem.l_extendedprice * ('1'::numeric - lineitem.l_discount)))) DESC, orders.o_orderdate
+         Sort Method: top-N heapsort  Memory: 26kB
+         ->  Finalize GroupAggregate  (cost=25126090.27..29303496.88 rows=31742244 width=48) (actual time=7161843.684..7165739.906 rows=1131737 loops=1)
+               Group Key: lineitem.l_orderkey, orders.o_orderdate, orders.o_shippriority
+               ->  Gather Merge  (cost=25126090.27..28576070.46 rows=26451870 width=48) (actual time=7161843.644..7164964.839 rows=1131800 loops=1)
+                     Workers Planned: 2
+                     Workers Launched: 1
+                     ->  Partial GroupAggregate  (cost=25125090.25..25521868.30 rows=13225935 width=48) (actual time=7161828.765..7163924.080 rows=565900 loops=2)
+                           Group Key: lineitem.l_orderkey, orders.o_orderdate, orders.o_shippriority
+                           ->  Sort  (cost=25125090.25..25158155.09 rows=13225935 width=28) (actual time=7161828.656..7162224.382 rows=1495888 loops=2)
+                                 Sort Key: lineitem.l_orderkey, orders.o_orderdate, orders.o_shippriority
+                                 Sort Method: external merge  Disk: 57912kB
+                                 Worker 0:  Sort Method: external merge  Disk: 57760kB
+                                 ->  Parallel Hash Join  (cost=4573212.58..22927785.36 rows=13225935 width=28) (actual time=6601917.448..7155122.558 rows=1495888 loops=2)
+                                       Hash Cond: (lineitem.l_orderkey = orders.o_orderkey)
+                                       ->  Parallel Seq Scan on lineitem  (cost=0.00..15344036.67 rows=134697606 width=20) (actual time=0.084..5417683.476 rows=162371448 loops=2)
+                                             Filter: (l_shipdate > '1995-03-10'::date)
+                                             Rows Removed by Filter: 137647502
+                                       ->  Parallel Hash  (cost=4466541.14..4466541.14 rows=6136595 width=12) (actual time=999524.912..999524.912 rows=7254051 loops=2)
+                                             Buckets: 131072  Batches: 256  Memory Usage: 3744kB
+                                             ->  Parallel Hash Join  (cost=470019.77..4466541.14 rows=6136595 width=12) (actual time=825224.609..996362.470 rows=7254051 loops=2)
+                                                   Hash Cond: (orders.o_custkey = customer.c_custkey)
+                                                   ->  Parallel Seq Scan on orders  (cost=0.00..3557817.75 rows=30239467 width=20) (actual time=0.071..722318.691 rows=36281292 loops=2)
+                                                         Filter: (o_orderdate < '1995-03-10'::date)
+                                                         Rows Removed by Filter: 38718708
+                                                   ->  Parallel Hash  (cost=449211.52..449211.52 rows=1268260 width=4) (actual time=76560.406..76560.406 rows=1500010 loops=2)
+                                                         Buckets: 131072  Batches: 64  Memory Usage: 2880kB
+                                                         ->  Parallel Seq Scan on customer  (cost=0.00..449211.52 rows=1268260 width=4) (actual time=157.608..75918.869 rows=1500010 loops=2)
+                                                               Filter: (c_mktsegment = 'HOUSEHOLD'::bpchar)
+                                                               Rows Removed by Filter: 5999990
+ Planning Time: 2076.769 ms
+ Execution Time: 7167012.686 ms
+(34 rows)
+

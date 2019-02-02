@@ -1,0 +1,24 @@
+                                                                           QUERY PLAN                                                                            
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize GroupAggregate  (cost=17580790.06..17580837.88 rows=5 width=24) (actual time=15999268.461..16004264.274 rows=5 loops=1)
+   Group Key: orders.o_orderpriority
+   ->  Gather Merge  (cost=17580790.06..17580837.78 rows=10 width=24) (actual time=15998588.014..16004264.361 rows=5 loops=1)
+         Workers Planned: 2
+         Workers Launched: 0
+         ->  Partial GroupAggregate  (cost=17579790.04..17579836.60 rows=5 width=24) (actual time=15998587.386..16004263.598 rows=5 loops=1)
+               Group Key: orders.o_orderpriority
+               ->  Sort  (cost=17579790.04..17579805.54 rows=6202 width=16) (actual time=15998105.938..16003493.137 rows=5256561 loops=1)
+                     Sort Key: orders.o_orderpriority
+                     Sort Method: external merge  Disk: 133752kB
+                     ->  Nested Loop Semi Join  (cost=0.57..17579399.36 rows=6202 width=16) (actual time=22714.188..15932826.902 rows=5256561 loops=1)
+                           ->  Parallel Seq Scan on orders  (cost=0.00..3714060.90 rows=2343290 width=20) (actual time=0.047..1867138.306 rows=5733151 loops=1)
+                                 Filter: ((o_orderdate >= '1993-08-01'::date) AND (o_orderdate < '1993-11-01 00:00:00'::timestamp without time zone))
+                                 Rows Removed by Filter: 144266849
+                           ->  Index Scan using lineitem_pkey on lineitem  (cost=0.57..2685.85 rows=504 width=8) (actual time=2.452..2.452 rows=1 loops=5733151)
+                                 Index Cond: (l_orderkey = orders.o_orderkey)
+                                 Filter: (l_commitdate < l_receiptdate)
+                                 Rows Removed by Filter: 1
+ Planning Time: 0.627 ms
+ Execution Time: 16004559.490 ms
+(20 rows)
+
