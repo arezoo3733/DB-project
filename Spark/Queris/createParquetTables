@@ -1,0 +1,294 @@
+###Nation
+from pyspark.sql.types import *
+from pyspark.sql import *
+from pyspark.sql import functions
+data = sc.textFile("/data/OLAP_Benchmark_data/nation.tbl")
+fields=[StructField("N_NATIONKEY", IntegerType(), True), StructField("N_NAME", StringType(), True), StructField("N_REGIONKEY", IntegerType(), True), StructField("N_COMMENT", StringType(), True)]
+schema=StructType(fields)
+df = data.\
+    map(lambda x: x.split("|")).\
+    map(lambda x: {
+        'N_NATIONKEY':int(x[0]),
+        'N_NAME':x[1],
+        'N_REGIONKEY':int(x[2]),
+        'N_COMMENT':x[3]})\
+    .toDF(schema)
+df.write.parquet("hdfs://namenode:8020/arezoo-data/nation.parquet")
+
+DROP TABLE IF EXISTS NATION CASCADE;
+CREATE TABLE NATION (
+	N_NATIONKEY		SERIAL PRIMARY KEY,
+	N_NAME			CHAR(25),
+	N_REGIONKEY		BIGINT NOT NULL,  -- references R_REGIONKEY
+	N_COMMENT		VARCHAR(152),
+Tmp VARCHAR(23)
+);
+
+####Region
+DROP TABLE IF EXISTS REGION CASCADE;
+CREATE TABLE REGION (
+	R_REGIONKEY	SERIAL PRIMARY KEY,
+	R_NAME		CHAR(25),
+	R_COMMENT	VARCHAR(152),
+Tmp VARCHAR(23)
+);
+
+from pyspark.sql.types import *
+from pyspark.sql import *
+from pyspark.sql import functions
+data = sc.textFile("/data/OLAP_Benchmark_data/region.tbl")
+fields=[StructField("R_REGIONKEY", IntegerType(), True), StructField("R_NAME", StringType(), True), StructField("R_COMMENT", StringType(), True)]
+schema=StructType(fields)
+df = data.\
+    map(lambda x: x.split("|")).\
+    map(lambda x: {
+        'R_REGIONKEY':int(x[0]),
+        'R_NAME':x[1],
+        'N_COMMENT':x[3]})\
+    .toDF(schema)
+df.write.parquet("hdfs://namenode:8020/arezoo-data/region.parquet")
+
+region = sqlContext.read.parquet("hdfs://namenode:8020/arezoo-data/region.parquet")
+region.filter('r_regionkey < 5').show()
+
+
+###part
+
+from pyspark.sql.types import *
+from pyspark.sql import *
+from pyspark.sql import functions
+data = sc.textFile("/data/OLAP_Benchmark_data/part.tbl")
+fields=[StructField("P_PARTKEY", IntegerType(), True), StructField("P_NAME", StringType(), True) , StructField("P_MFGR", StringType(), True), StructField("P_BRAND", StringType(), True) , StructField("P_TYPE", StringType(), True), StructField("P_SIZE", IntegerType(), True), StructField("P_CONTAINER", StringType(), True), StructField("P_RETAILPRICE", FloatType(), True), StructField("P_COMMENT", StringType(), True)]
+schema=StructType(fields)
+df = data.\
+    map(lambda x: x.split("|")).\
+    map(lambda x: {
+        'P_PARTKEY':int(x[0]),
+        'P_NAME':x[1],
+        'P_MFGR':x[2],
+        'P_BRAND':x[3],
+        'P_TYPE':x[4],
+        'P_SIZE':int(x[5]),
+        'P_CONTAINER':x[6],
+        'P_RETAILPRICE':float(x[7]),
+        'P_COMMENT':x[8]})\
+    .toDF(schema)
+df.write.mode("overwrite").parquet("hdfs://namenode:8020/arezoo-data/part.parquet")
+
+DROP TABLE IF EXISTS PART CASCADE;
+	CREATE TABLE PART (
+	
+		P_PARTKEY		SERIAL PRIMARY KEY,
+		P_NAME			VARCHAR(55),
+		P_MFGR			CHAR(25),
+		P_BRAND			CHAR(10),
+		P_TYPE			VARCHAR(25),
+		P_SIZE			INTEGER,
+		P_CONTAINER		CHAR(10),
+		P_RETAILPRICE	DECIMAL,
+		P_COMMENT		VARCHAR(23),
+Tmp VARCHAR(23)
+	);
+
+
+###supplier
+
+from pyspark.sql.types import *
+from pyspark.sql import *
+from pyspark.sql import functions
+data = sc.textFile("/data/OLAP_Benchmark_data/supplier.tbl")
+fields=[StructField("S_SUPPKEY", IntegerType(), True), StructField("S_NAME", StringType(), True) , StructField("S_ADDRESS", StringType(), True), StructField("S_NATIONKEY", IntegerType(), True), StructField("S_PHONE", StringType(), True), StructField("S_ACCTBAL", FloatType(), True), StructField("S_COMMENT", StringType(), True)]
+schema=StructType(fields)
+df = data.\
+    map(lambda x: x.split("|")).\
+    map(lambda x: {
+        'S_SUPPKEY':int(x[0]),
+        'S_NAME':x[1],
+        'S_ADDRESS':x[2],
+        'S_NATIONKEY':int(x[3]),
+        'S_PHONE':x[4],
+        'S_ACCTBAL':float(x[5]),
+        'S_COMMENT':x[6]})\
+    .toDF(schema)
+df.write.mode("overwrite").parquet("hdfs://namenode:8020/arezoo-data/supplier.parquet")
+
+	DROP TABLE IF EXISTS SUPPLIER CASCADE;
+	CREATE TABLE SUPPLIER (
+		S_SUPPKEY		SERIAL PRIMARY KEY,
+		S_NAME			CHAR(25),
+		S_ADDRESS		VARCHAR(40),
+		S_NATIONKEY		BIGINT NOT NULL, -- references N_NATIONKEY
+		S_PHONE			CHAR(15),
+		S_ACCTBAL		DECIMAL,
+		S_COMMENT		VARCHAR(101),
+Tmp VARCHAR(23)
+	);
+
+
+###partsupp
+from pyspark.sql.types import *
+from pyspark.sql import *
+from pyspark.sql import functions
+data = sc.textFile("/data/OLAP_Benchmark_data/partsupp.tbl")
+fields=[StructField("PS_PARTKEY", IntegerType(), True), StructField("PS_SUPPKEY", IntegerType(), True), StructField("PS_AVAILQTY", IntegerType(), True),   StructField("PS_SUPPLYCOST", FloatType(), True), StructField("PS_COMMENT", StringType(), True)]
+schema=StructType(fields)
+df = data.\
+    map(lambda x: x.split("|")).\
+    map(lambda x: {
+        'PS_PARTKEY':int(x[0]),
+'PS_SUPPKEY':int(x[1]),
+'PS_AVAILQTY':int(x[2]),
+        'PS_SUPPLYCOST':float(x[3]),
+        'PS_COMMENT':x[4]})\
+    .toDF(schema)
+df.write.mode("overwrite").parquet("hdfs://namenode:8020/arezoo-data/partsupp.parquet")
+
+	DROP TABLE IF EXISTS PARTSUPP CASCADE;
+	CREATE TABLE PARTSUPP (
+		PS_PARTKEY		BIGINT NOT NULL, -- references P_PARTKEY
+		PS_SUPPKEY		BIGINT NOT NULL, -- references S_SUPPKEY
+		PS_AVAILQTY		INTEGER,
+		PS_SUPPLYCOST	DECIMAL,
+		PS_COMMENT		VARCHAR(199),
+Tmp VARCHAR(23),
+		PRIMARY KEY (PS_PARTKEY, PS_SUPPKEY)
+	);
+	
+  ###customer
+	DROP TABLE IF EXISTS CUSTOMER CASCADE;
+	from pyspark.sql.types import *
+from pyspark.sql import *
+from pyspark.sql import functions
+data = sc.textFile("/data/OLAP_Benchmark_data/customer.tbl")
+fields=[StructField("C_CUSTKEY", IntegerType(), False) , StructField("C_NAME", StringType(), True) , StructField("C_ADDRESS", StringType(), True), StructField("C_NATIONKEY", IntegerType(),False) ,StructField("C_PHONE", StringType(), True), StructField("C_ACCTBAL", FloatType(), True), StructField("C_MKTSEGMENT", StringType(), True), StructField("C_COMMENT", StringType(), True)]
+schema=StructType(fields)
+df = data.\
+    map(lambda x: x.split("|")).\
+    map(lambda x: {
+      'C_CUSTKEY':int(x[0]),
+'C_NAME':x[1],
+'C_ADDRESS':x[2],
+'C_NATIONKEY':int(x[3]),
+'C_PHONE':x[4],
+'C_ACCTBAL':float(x[5]),
+'C_MKTSEGMENT':x[6],
+'C_COMMENT':x[7]})\
+    .toDF(schema)
+df.write.parquet("hdfs://namenode:8020/arezoo-data/customer.parquet")
+
+
+CREATE TABLE CUSTOMER (
+		C_CUSTKEY		SERIAL PRIMARY KEY,
+		C_NAME			VARCHAR(25),
+		C_ADDRESS		VARCHAR(40),
+		C_NATIONKEY		BIGINT NOT NULL, -- references N_NATIONKEY
+		C_PHONE			CHAR(15),
+		C_ACCTBAL		DECIMAL,
+		C_MKTSEGMENT	CHAR(10),
+		C_COMMENT		VARCHAR(117),
+Tmp VARCHAR(23)
+	);
+	
+ #####orders
+from pyspark.sql.types import *
+from pyspark.sql import *
+from pyspark.sql import functions
+data = sc.textFile("/data/OLAP_Benchmark_data/orders.tbl")
+fields=[StructField("O_ORDERKEY", IntegerType(), True), StructField("O_CUSTKEY", IntegerType(), True),  StructField("O_ORDERSTATUS", StringType(), True) , StructField("O_TOTALPRICE", FloatType(), True),  StructField("O_ORDERDATE",StringType(), True), StructField("O_ORDERPRIORITY", StringType(), True), StructField("O_CLERK", StringType(), True), StructField("O_SHIPPRIORITY", IntegerType(), True), StructField("O_COMMENT", StringType(), True)]
+schema=StructType(fields)
+df = data.\
+    map(lambda x: x.split("|")).\
+    map(lambda x: {
+        'O_ORDERKEY':int(x[0]),
+'O_CUSTKEY':int(x[1]),
+        'O_ORDERSTATUS':x[2],
+        'O_TOTALPRICE':float(x[3]),
+'O_ORDERDATE':x[4],
+        'O_ORDERPRIORITY':x[5],
+        'O_CLERK':x[6],
+'O_SHIPPRIORITY':int(x[7]),
+        'O_COMMENT':x[8]})\
+    .toDF(schema)
+df.write.parquet("hdfs://namenode:8020/arezoo-data/orders.parquet")
+
+DROP TABLE IF EXISTS ORDERS CASCADE;
+	CREATE TABLE ORDERS (
+		O_ORDERKEY		SERIAL PRIMARY KEY,
+		O_CUSTKEY		BIGINT NOT NULL, -- references C_CUSTKEY
+		O_ORDERSTATUS	CHAR(1),
+		O_TOTALPRICE	DECIMAL,
+		O_ORDERDATE		DATE,
+		O_ORDERPRIORITY	CHAR(15),
+		O_CLERK			CHAR(15),
+		O_SHIPPRIORITY	INTEGER,
+		O_COMMENT		VARCHAR(79),
+Tmp VARCHAR(23)
+	);
+
+###lineitem
+
+from pyspark.sql.types import *
+from pyspark.sql import *
+from pyspark.sql import functions
+data = sc.textFile("/data/OLAP_Benchmark_data/lineitem.tbl")
+fields=[StructField("L_ORDERKEY", IntegerType(), True), StructField("L_PARTKEY", IntegerType(), True), StructField("L_SUPPKEY", IntegerType(), True), StructField("L_LINENUMBER", IntegerType(), True),   StructField("L_QUANTITY", FloatType(), True) , StructField("L_EXTENDEDPRICE", FloatType(), True),  StructField("L_DISCOUNT", FloatType(), True) , StructField("L_TAX", FloatType(), True) ,StructField("L_RETURNFLAG",StringType(), True), StructField("L_LINESTATUS", StringType(), True), StructField("L_SHIPDATE", StringType(), True), StructField("L_COMMITDATE", StringType(), True), StructField("L_RECEIPTDATE", StringType(), True), StructField("L_SHIPINSTRUCT", StringType(), True), StructField("L_SHIPMODE",StringType(), True), StructField("L_COMMENT", StringType(), True)]
+schema=StructType(fields)
+df = data.\
+    map(lambda x: x.split("|")).\
+    map(lambda x: {
+        'L_ORDERKEY':int(x[0]),
+'L_PARTKEY':int(x[1]),
+'L_SUPPKEY':int(x[2]),
+'L_LINENUMBER':int(x[3]),
+'L_QUANTITY':float(x[4]),
+'L_EXTENDEDPRICE':float(x[5]),
+'L_DISCOUNT':float(x[6]),
+'L_TAX':float(x[7]),
+         'L_RETURNFLAG':x[8],
+         'L_LINESTATUS':x[9],
+         'L_SHIPDATE':x[10],
+         'L_COMMITDATE':x[11],
+         'L_RECEIPTDATE':x[12],
+         'L_SHIPINSTRUCT':x[13],
+         'L_SHIPMODE':x[14],
+         'L_COMMENT':x[15]})\
+    .toDF(schema)
+df.write.mode("overwrite").parquet("hdfs://namenode:8020/arezoo-data/lineitem.parquet")
+
+DROP TABLE IF EXISTS LINEITEM CASCADE;
+	CREATE TABLE LINEITEM (
+		L_ORDERKEY		BIGINT NOT NULL, -- references O_ORDERKEY
+		L_PARTKEY		BIGINT NOT NULL, -- references P_PARTKEY (compound fk to PARTSUPP)
+		L_SUPPKEY		BIGINT NOT NULL, -- references S_SUPPKEY (compound fk to PARTSUPP)
+		L_LINENUMBER	INTEGER,
+		L_QUANTITY		DECIMAL,
+		L_EXTENDEDPRICE	DECIMAL,
+		L_DISCOUNT		DECIMAL,
+		L_TAX			DECIMAL,
+		L_RETURNFLAG	CHAR(1),
+		L_LINESTATUS	CHAR(1),
+		L_SHIPDATE		DATE,
+		L_COMMITDATE	DATE,
+		L_RECEIPTDATE	DATE,
+		L_SHIPINSTRUCT	CHAR(25),
+		L_SHIPMODE		CHAR(10),
+		L_COMMENT		VARCHAR(44),
+Tmp VARCHAR(23),
+		PRIMARY KEY (L_ORDERKEY, L_LINENUMBER)
+	);
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
